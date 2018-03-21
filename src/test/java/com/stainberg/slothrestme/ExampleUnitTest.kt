@@ -1,5 +1,6 @@
 package com.stainberg.slothrestme
 
+import com.alibaba.fastjson.JSON
 import org.junit.Test
 
 /**
@@ -11,22 +12,15 @@ class ExampleUnitTest {
 
     @Test
     fun addition_isCorrect() {
+        val arr = arrayListOf<String>()
+        arr.add("d36ab911728b4e9b8dafe63c43fe0906")
+
         SlothClient.requestSet(
-                SlothClient.request("http://baidu.com").addParam("123", "321").addHeader("abc", "cba")
-                    .get(ABC::class.java, {
-                        println(it.javaClass.simpleName)
-                    }),
-                SlothClient.request("http://163.com").addParam("123", "321").addHeader("abc", "cba")
-                    .get(ABC.BCD::class.java, {
-                        println(it.javaClass.simpleName)
-                    }),
-                MyRequest().get(ABC.BCD.MyResp::class.java, {
-                        println(it.javaClass.simpleName)
-                    }),
-                "http://google.com".Request()
-                        .get(ABC::class.java, {
-                            println(it.javaClass.simpleName)
-                        })
+                SlothClient.request("http://192.168.75.36:1234/read").param("ids", JSON.toJSONString(arr))
+                    .get(ABC::class.java, {result, code ->
+                        println(code)
+                        println(JSON.toJSON(result))
+                    })
         ).start({
             println("set end")
         })
@@ -37,14 +31,11 @@ class ExampleUnitTest {
     }
 
     private class ABC : SlothResponse() {
-        var url = ""
+        var read_nums = arrayListOf<BCD>()
 
         class BCD : SlothResponse() {
-            var _url = ""
-
-            class MyResp : SlothResponse() {
-                var myUrl = ""
-            }
+            var id = ""
+            var read_num = 0
 
         }
     }
