@@ -6,7 +6,7 @@ import okhttp3.RequestBody
 /**
  * Created by Stainberg on 15/03/2018.
  */
-open class SlothRequest {
+open class SlothRequest<T : SlothResponse> {
 
     internal var url = ""
     internal var tag = ""
@@ -15,13 +15,14 @@ open class SlothRequest {
     private val parameters = HashMap<String, String>()
     private val headers = HashMap<String, String>()
     private val attachments = arrayListOf<Attachment>()
-
+    internal var success : (suspend ResponseBlock<T>.(T?, Int) -> Unit)? = null
+    internal var cls : Class<T>? = null
 
     /**
      * set url
      */
 
-    fun url(_url: String) : SlothRequest {
+    fun url(_url: String) : SlothRequest<T> {
         url = _url
         tag = System.currentTimeMillis().toString()
         return this
@@ -31,7 +32,7 @@ open class SlothRequest {
      * set params or header or attachment
      */
 
-    fun param(key : String, value : String?) : SlothRequest {
+    fun param(key : String, value : String?) : SlothRequest<T> {
         value?. let {
             parameters[key] = it
         }?: run {
@@ -40,7 +41,7 @@ open class SlothRequest {
         return this
     }
 
-    fun header(key : String, value : String?) : SlothRequest {
+    fun header(key : String, value : String?) : SlothRequest<T> {
         value?. let {
             headers[key] = it
         }?: run {
@@ -49,13 +50,27 @@ open class SlothRequest {
         return this
     }
 
-    fun jsonObject(json : Any?) : SlothRequest {
+    fun jsonObject(json : Any?) : SlothRequest<T> {
         jsonobject = json
         return this
     }
 
-    fun addAttachment(att : Attachment) : SlothRequest {
+    fun addAttachment(att : Attachment) : SlothRequest<T> {
         attachments.add(att)
+        return this
+    }
+
+    fun onSuccess(c : Class<T>, block : suspend ResponseBlock<T>.(T?, Int) -> Unit) : SlothRequest<T> {
+        success = block
+        cls = c
+        return this
+    }
+
+    fun onFailed(block : suspend ResponseBlock<T>.(T?, Int) -> Unit) : SlothRequest<T> {
+        return this
+    }
+
+    fun onCompleted(block : suspend ResponseBlock<T>.(T?, Int) -> Unit) : SlothRequest<T> {
         return this
     }
 
@@ -95,24 +110,24 @@ open class SlothRequest {
      * define function
      */
 
-    fun <T : SlothResponse> get(cls : Class<T>?, success : suspend ResponseBlock.(T?, Int) -> Unit) : Deferred<*> {
+    fun  get() : Deferred<*> {
         memthod = SlothRequestType.GET
-        return SlothLogic.get(this, cls, success)
+        return SlothLogic.get(this)
     }
 
-    fun <T : SlothResponse> post(cls : Class<T>?, success : suspend ResponseBlock.(T?, Int) -> Unit) : Deferred<*> {
+    fun post() : Deferred<*> {
         memthod = SlothRequestType.POST
-        return SlothLogic.post(this, cls, success)
+        return SlothLogic.post(this)
     }
 
-    fun <T : SlothResponse> patch(cls : Class<T>?, success : suspend ResponseBlock.(T?, Int) -> Unit) : Deferred<*> {
+    fun patch() : Deferred<*> {
         memthod = SlothRequestType.PATCH
-        return SlothLogic.patch(this, cls, success)
+        return SlothLogic.patch(this)
     }
 
-    fun <T : SlothResponse> delete(cls : Class<T>?, success : suspend ResponseBlock.(T?, Int) -> Unit) : Deferred<*> {
+    fun delete() : Deferred<*> {
         memthod = SlothRequestType.DELETE
-        return SlothLogic.delete(this, cls, success)
+        return SlothLogic.delete(this)
     }
 
     inner class Attachment {

@@ -14,43 +14,43 @@ import java.io.IOException
  */
 internal object SlothLogic {
 
-    fun <T : SlothResponse> get(request: SlothRequest, cls : Class<T>?, success : suspend ResponseBlock.(T?, Int) -> Unit) : Deferred<*> {
-        val block = StandaloneResponseBlock()
+    fun <T : SlothResponse> get(request: SlothRequest<T>) : Deferred<*> {
+        val block = StandaloneResponseBlock<T>()
         val task = async(CommonPool, CoroutineStart.LAZY, block = {
-            fetchRequest(request, block, cls, success)
+            fetchRequest(request, block)
         })
         block.initTask(task)
         return task
     }
 
-    fun <T : SlothResponse> post(request: SlothRequest, cls : Class<T>?, success : suspend ResponseBlock.(T?, Int) -> Unit) : Deferred<*> {
-        val block = StandaloneResponseBlock()
+    fun <T : SlothResponse> post(request: SlothRequest<T>) : Deferred<*> {
+        val block = StandaloneResponseBlock<T>()
         val task = async(CommonPool, CoroutineStart.LAZY, block = {
-            fetchRequest(request, block, cls, success)
+            fetchRequest(request, block)
         })
         block.initTask(task)
         return task
     }
 
-    fun <T : SlothResponse> patch(request: SlothRequest, cls : Class<T>?, success : suspend ResponseBlock.(T?, Int) -> Unit) : Deferred<*> {
-        val block = StandaloneResponseBlock()
+    fun <T : SlothResponse> patch(request: SlothRequest<T>) : Deferred<*> {
+        val block = StandaloneResponseBlock<T>()
         val task = async(CommonPool, CoroutineStart.LAZY, block = {
-            fetchRequest(request, block, cls, success)
+            fetchRequest(request, block)
         })
         block.initTask(task)
         return task
     }
 
-    fun <T : SlothResponse> delete(request: SlothRequest, cls : Class<T>?, success : suspend ResponseBlock.(T?, Int) -> Unit) : Deferred<*> {
-        val block = StandaloneResponseBlock()
+    fun <T : SlothResponse> delete(request: SlothRequest<T>) : Deferred<*> {
+        val block = StandaloneResponseBlock<T>()
         val task = async(CommonPool, CoroutineStart.LAZY, block = {
-            fetchRequest(request, block, cls, success)
+            fetchRequest(request, block)
         })
         block.initTask(task)
         return task
     }
 
-    private suspend fun <T : SlothResponse> fetchRequest(request: SlothRequest, block : ResponseBlock, cls : Class<T>?, success : suspend ResponseBlock.(T?, Int) -> Unit) {
+    private suspend fun <T : SlothResponse>  fetchRequest(request: SlothRequest<T>, block : ResponseBlock<T>) {
         val req = parse(request)
         var code = 0
         block.request = request
@@ -65,10 +65,10 @@ internal object SlothLogic {
                 if (resp.isSuccessful) {
                     resp.body()?.let { body ->
                         responseString = body.string()
-                        if (cls != null) {
+                        if (request.cls != null) {
                             if(responseString.isNotEmpty()) {
                                 SlothLogger.log("Response String id = ${request.tag}", responseString)
-                                result = JSON.parseObject(responseString, cls)
+                                result = JSON.parseObject(responseString, request.cls)
                             } else {
                                 code = SlothNetworkConstants.BUSINESS_ERROR
                             }
@@ -84,10 +84,12 @@ internal object SlothLogic {
         } catch (e : JSONException) {
             code = SlothNetworkConstants.PARSER_ERROR
         }
-        success(block, result, code)
+        request.success?. let {
+            it(block, result, code)
+        }
     }
 
-    private fun parse(requestEntity: SlothRequest) : Request {
+    private fun <T : SlothResponse> parse(requestEntity: SlothRequest<T>) : Request {
         val params = requestEntity.params()
         val headers = requestEntity.headers()
         val attachments = requestEntity.attachments()

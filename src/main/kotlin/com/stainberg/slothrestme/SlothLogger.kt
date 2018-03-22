@@ -27,14 +27,14 @@ object SlothLogger {
         }
     }
 
-    internal fun printcUrl(o: SlothRequest) {
+    internal fun <T : SlothResponse> printcUrl(o: SlothRequest<T>) {
         if (isDebug) {
             println("cURL String = ${buildCurlString(o)}")
         }
     }
 
 
-    private fun buildCurlString(request: SlothRequest): String {
+    private fun <T : SlothResponse> buildCurlString(request: SlothRequest<T>): String {
         var url = request.url()
         val wspace = " "
         val builder = StringBuilder()

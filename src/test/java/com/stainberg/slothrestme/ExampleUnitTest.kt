@@ -16,11 +16,12 @@ class ExampleUnitTest {
         arr.add("d36ab911728b4e9b8dafe63c43fe0906")
 
         SlothClient.requestSet(
-                SlothClient.request("http://192.168.75.36:1234/read").param("ids", JSON.toJSONString(arr))
-                    .get(ABC::class.java, {result, code ->
-                        println(code)
-                        println(JSON.toJSON(result))
-                    })
+                SlothClient.request<ABC>("http://192.168.75.36:1234/read").param("ids", JSON.toJSONString(arr))
+                        .onSuccess(ABC::class.java, {result, code ->
+                            println(code)
+                            println(JSON.toJSON(result))
+                        })
+                    .get()
         ).start({
             println("set end")
         })
@@ -30,7 +31,7 @@ class ExampleUnitTest {
         }
     }
 
-    private class ABC : SlothResponse() {
+    class ABC : SlothResponse() {
         var read_nums = arrayListOf<BCD>()
 
         class BCD : SlothResponse() {
@@ -40,7 +41,7 @@ class ExampleUnitTest {
         }
     }
 
-    class MyRequest : SlothRequest() {
+    class MyRequest : SlothRequest<ABC>() {
         init {
             url("http://youtube.com")
         }

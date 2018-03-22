@@ -5,9 +5,9 @@ import kotlinx.coroutines.experimental.Deferred
 /**
  * Created by Stainberg on 15/03/2018.
  */
-abstract class ResponseBlock {
+abstract class ResponseBlock<T : SlothResponse> {
 
-    lateinit var request : SlothRequest
+    lateinit var request : SlothRequest<T>
 
     private var task: Deferred<*>? = null
 
