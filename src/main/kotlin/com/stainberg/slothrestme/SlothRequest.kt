@@ -1,30 +1,39 @@
 package com.stainberg.slothrestme
 
+import com.alibaba.fastjson.annotation.JSONField
+import kotlinx.coroutines.experimental.CoroutineStart
 import kotlinx.coroutines.experimental.Deferred
+import kotlinx.coroutines.experimental.launch
 import okhttp3.RequestBody
 
 /**
  * Created by Stainberg on 15/03/2018.
  */
-open class SlothRequest<T : SlothResponse> {
+open class SlothRequest {
 
     internal var url = ""
-    internal var tag = ""
+    private var tag = ""
     private var jsonobject : Any? = null
     private var memthod = SlothRequestType.GET
     private val parameters = HashMap<String, String>()
     private val headers = HashMap<String, String>()
     private val attachments = arrayListOf<Attachment>()
-    internal var success : (suspend ResponseBlock<T>.(T?, Int) -> Unit)? = null
-    internal var cls : Class<T>? = null
+
+    @JSONField(serialize=false, deserialize=false) internal var success : (suspend SuccessResponseBlock.(SlothResponse) -> Unit)? = null
+
+    @JSONField(serialize=false, deserialize=false) internal var failed : (suspend FailedResponseBlock.(Int) -> Unit)? = null
+
+    @JSONField(serialize=false, deserialize=false) internal var completed : (suspend CompletedResponseBlock.() -> Unit)? = null
+
+    internal var cls : Class<SlothResponse>? = null
 
     /**
      * set url
      */
 
-    fun url(_url: String) : SlothRequest<T> {
-        url = _url
-        tag = System.currentTimeMillis().toString()
+    fun url(url: String) : SlothRequest {
+        this.url = url
+        this.tag = System.currentTimeMillis().toString()
         return this
     }
 
@@ -32,45 +41,56 @@ open class SlothRequest<T : SlothResponse> {
      * set params or header or attachment
      */
 
-    fun param(key : String, value : String?) : SlothRequest<T> {
+    fun tag(tag : String) : SlothRequest {
+        this.tag = tag
+        return this
+    }
+
+    fun param(key : String, value : String?) : SlothRequest {
         value?. let {
-            parameters[key] = it
+            this.parameters[key] = it
         }?: run {
-            parameters.remove(key)
+            this.parameters.remove(key)
         }
         return this
     }
 
-    fun header(key : String, value : String?) : SlothRequest<T> {
+    fun header(key : String, value : String?) : SlothRequest {
         value?. let {
-            headers[key] = it
+            this.headers[key] = it
         }?: run {
-            headers.remove(key)
+            this.headers.remove(key)
         }
         return this
     }
 
-    fun jsonObject(json : Any?) : SlothRequest<T> {
-        jsonobject = json
+    fun jsonObject(jsonobject : Any?) : SlothRequest {
+        this.jsonobject = jsonobject
         return this
     }
 
-    fun addAttachment(att : Attachment) : SlothRequest<T> {
-        attachments.add(att)
+    fun addAttachment(attachment : Attachment) : SlothRequest {
+        this.attachments.add(attachment)
         return this
     }
 
-    fun onSuccess(c : Class<T>, block : suspend ResponseBlock<T>.(T?, Int) -> Unit) : SlothRequest<T> {
+    /**
+     * set result block
+     */
+
+    fun <T : SlothResponse> onSuccess(c : Class<T>, block : suspend SuccessResponseBlock.(SlothResponse) -> Unit) : SlothRequest {
         success = block
-        cls = c
+        cls = c as Class<SlothResponse>
         return this
     }
 
-    fun onFailed(block : suspend ResponseBlock<T>.(T?, Int) -> Unit) : SlothRequest<T> {
+    fun onFailed(block : suspend FailedResponseBlock.(Int) -> Unit) : SlothRequest {
+        failed = block
         return this
     }
 
-    fun onCompleted(block : suspend ResponseBlock<T>.(T?, Int) -> Unit) : SlothRequest<T> {
+    fun onCompleted(block : suspend CompletedResponseBlock.() -> Unit) : SlothRequest {
+        completed = block
         return this
     }
 
@@ -110,24 +130,52 @@ open class SlothRequest<T : SlothResponse> {
      * define function
      */
 
-    fun  get() : Deferred<*> {
+    fun  get() {
         memthod = SlothRequestType.GET
-        return SlothLogic.get(this)
+        launch {
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
+        }
     }
 
-    fun post() : Deferred<*> {
+    fun  getSync() : Deferred<*> {
+        memthod = SlothRequestType.GET
+        return SlothLogic.get(this, CoroutineStart.LAZY)
+    }
+
+    fun  post() {
         memthod = SlothRequestType.POST
-        return SlothLogic.post(this)
+        launch {
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
+        }
     }
 
-    fun patch() : Deferred<*> {
+    fun postSync() : Deferred<*> {
+        memthod = SlothRequestType.POST
+        return SlothLogic.post(this, CoroutineStart.LAZY)
+    }
+
+    fun  patch() {
         memthod = SlothRequestType.PATCH
-        return SlothLogic.patch(this)
+        launch {
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
+        }
     }
 
-    fun delete() : Deferred<*> {
+    fun patchSync() : Deferred<*> {
+        memthod = SlothRequestType.PATCH
+        return SlothLogic.patch(this, CoroutineStart.LAZY)
+    }
+
+    fun  delete() {
         memthod = SlothRequestType.DELETE
-        return SlothLogic.delete(this)
+        launch {
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
+        }
+    }
+
+    fun deleteSync() : Deferred<*> {
+        memthod = SlothRequestType.DELETE
+        return SlothLogic.delete(this, CoroutineStart.LAZY)
     }
 
     inner class Attachment {

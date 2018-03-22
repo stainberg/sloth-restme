@@ -10,13 +10,13 @@ object SlothLogger {
 
     var isDebug: Boolean = false
 
-    internal fun log(tag: String, x: String) {
+    internal fun log(tag: String, x: String?) {
         if (isDebug) {
             println("$tag = $x")
         }
     }
 
-    internal fun log(tag: String, o: Any) {
+    internal fun log(tag: String, o: Any?) {
         if (isDebug) {
             try {
                 println("$tag = ${JSON.toJSONString(o)}")
@@ -27,14 +27,14 @@ object SlothLogger {
         }
     }
 
-    internal fun <T : SlothResponse> printcUrl(o: SlothRequest<T>) {
+    internal fun printcUrl(o: SlothRequest) {
         if (isDebug) {
             println("cURL String = ${buildCurlString(o)}")
         }
     }
 
 
-    private fun <T : SlothResponse> buildCurlString(request: SlothRequest<T>): String {
+    private fun buildCurlString(request: SlothRequest): String {
         var url = request.url()
         val wspace = " "
         val builder = StringBuilder()

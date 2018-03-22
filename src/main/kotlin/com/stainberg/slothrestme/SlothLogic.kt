@@ -14,52 +14,55 @@ import java.io.IOException
  */
 internal object SlothLogic {
 
-    fun <T : SlothResponse> get(request: SlothRequest<T>) : Deferred<*> {
-        val block = StandaloneResponseBlock<T>()
-        val task = async(CommonPool, CoroutineStart.LAZY, block = {
+    fun get(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
+        val block = CompletedResponseBlock(request)
+        val task = async(CommonPool, start, block = {
             fetchRequest(request, block)
         })
         block.initTask(task)
         return task
     }
 
-    fun <T : SlothResponse> post(request: SlothRequest<T>) : Deferred<*> {
-        val block = StandaloneResponseBlock<T>()
-        val task = async(CommonPool, CoroutineStart.LAZY, block = {
+    fun post(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
+        val block = CompletedResponseBlock(request)
+        val task = async(CommonPool, start, block = {
             fetchRequest(request, block)
         })
         block.initTask(task)
         return task
     }
 
-    fun <T : SlothResponse> patch(request: SlothRequest<T>) : Deferred<*> {
-        val block = StandaloneResponseBlock<T>()
-        val task = async(CommonPool, CoroutineStart.LAZY, block = {
+    fun patch(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
+        val block = CompletedResponseBlock(request)
+        val task = async(CommonPool, start, block = {
             fetchRequest(request, block)
         })
         block.initTask(task)
         return task
     }
 
-    fun <T : SlothResponse> delete(request: SlothRequest<T>) : Deferred<*> {
-        val block = StandaloneResponseBlock<T>()
-        val task = async(CommonPool, CoroutineStart.LAZY, block = {
+    fun delete(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
+        val block = CompletedResponseBlock(request)
+        val task = async(CommonPool, start, block = {
             fetchRequest(request, block)
         })
         block.initTask(task)
         return task
     }
 
-    private suspend fun <T : SlothResponse>  fetchRequest(request: SlothRequest<T>, block : ResponseBlock<T>) {
+    internal suspend fun fetchRequest(request: SlothRequest, completedResponseBlock: CompletedResponseBlock) {
         val req = parse(request)
         var code = 0
-        block.request = request
-        var result: T? = null
+        val success = request.success
+        val failed = request.failed
+        val completed = request.completed
+        var result: SlothResponse? = null
         try {
             val response = SlothHttpClient.httpClient.newCall(req).execute()
             var responseString: String
             SlothLogger.printcUrl(request)
-            SlothLogger.log("Request id = ${request.tag}", request)
+            SlothLogger.log("params", request.params())
+            SlothLogger.log("headers", request.headers())
             response?.let { resp ->
                 code = resp.code()
                 if (resp.isSuccessful) {
@@ -67,10 +70,8 @@ internal object SlothLogic {
                         responseString = body.string()
                         if (request.cls != null) {
                             if(responseString.isNotEmpty()) {
-                                SlothLogger.log("Response String id = ${request.tag}", responseString)
+                                SlothLogger.log("fetchRequest", responseString)
                                 result = JSON.parseObject(responseString, request.cls)
-                            } else {
-                                code = SlothNetworkConstants.BUSINESS_ERROR
                             }
                         }
                     }
@@ -84,12 +85,27 @@ internal object SlothLogic {
         } catch (e : JSONException) {
             code = SlothNetworkConstants.PARSER_ERROR
         }
-        request.success?. let {
-            it(block, result, code)
+        if(code in 200..299) {
+            success?. let {sc->
+                result?. let {
+                    sc(SuccessResponseBlock(request), it)
+                }?: run {
+                    failed?. let {fl->
+                        fl(FailedResponseBlock(request), SlothNetworkConstants.NO_RESULT_SET)
+                    }
+                }
+            }
+        } else {
+            failed?. let {fl->
+                fl(FailedResponseBlock(request), code)
+            }
+        }
+        completed?. let {cp->
+            cp(completedResponseBlock)
         }
     }
 
-    private fun <T : SlothResponse> parse(requestEntity: SlothRequest<T>) : Request {
+    private fun parse(requestEntity: SlothRequest) : Request {
         val params = requestEntity.params()
         val headers = requestEntity.headers()
         val attachments = requestEntity.attachments()
@@ -178,7 +194,7 @@ internal object SlothLogic {
                 builder.delete(body)
             }
         }
-//        builder.tag(SecurityMD5.ToMD5(url))
+        builder.tag(SecurityMD5.ToMD5(requestEntity.url))
         builder.url(requestEntity.url)
         return builder.build()
     }

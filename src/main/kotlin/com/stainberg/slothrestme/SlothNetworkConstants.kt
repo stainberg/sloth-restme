@@ -6,11 +6,8 @@ package com.stainberg.slothrestme
  */
 object SlothNetworkConstants {
 
-    val SC_OK = 200
-    val REQUEST_INTERRUPT = -1
-    val PARSER_ERROR = -2
-    val NO_RESPONSE = -3
-    val NETWORK_ERROR = -4
-    val BUSINESS_ERROR = -5
-
+    val PARSER_ERROR = -1
+    val NO_RESPONSE = -2
+    val NETWORK_ERROR = -3
+    val NO_RESULT_SET = -4
 }

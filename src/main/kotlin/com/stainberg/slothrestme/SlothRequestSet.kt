@@ -22,7 +22,7 @@ class SlothRequestSet(vararg jobs: Deferred<*>) {
                     try {
                         task.await()
                     } catch (e : CancelException) {
-                        println(e.message)
+                        SlothLogger.log("SlothRequestSet", e.message)
                         cancel = true
                     }
                 }

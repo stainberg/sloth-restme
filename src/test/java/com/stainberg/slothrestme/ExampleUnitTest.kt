@@ -12,19 +12,37 @@ class ExampleUnitTest {
 
     @Test
     fun addition_isCorrect() {
+        SlothLogger.isDebug = true
         val arr = arrayListOf<String>()
         arr.add("d36ab911728b4e9b8dafe63c43fe0906")
 
         SlothClient.requestSet(
-                SlothClient.request<ABC>("http://192.168.75.36:1234/read").param("ids", JSON.toJSONString(arr))
-                        .onSuccess(ABC::class.java, {result, code ->
-                            println(code)
-                            println(JSON.toJSON(result))
+                SlothClient.request("http://192.168.75.36:1234/read").param("ids", JSON.toJSONString(arr)).tag("123")
+                        .onSuccess(ABC::class.java, {
+                            println("onSuccess ${JSON.toJSON(it)}")
                         })
-                    .get()
+                        .onFailed {
+                            println("onFailed Code = $it")
+                        }
+                        .onCompleted {
+                            println("onCompleted")
+                        }
+                    .getSync()
         ).start({
             println("set end")
         })
+
+        SlothClient.request("http://192.168.75.36:1234/read").param("ids", JSON.toJSONString(arr))
+                .onSuccess(ABC::class.java, {
+                    println("onSuccess ${JSON.toJSON(it)}")
+                })
+                .onFailed {
+                    println("onFailed Code = $it")
+                }
+                .onCompleted {
+                    println("onCompleted")
+                }
+                .get()
 
         while (true) {
 
@@ -41,7 +59,7 @@ class ExampleUnitTest {
         }
     }
 
-    class MyRequest : SlothRequest<ABC>() {
+    class MyRequest : SlothRequest() {
         init {
             url("http://youtube.com")
         }

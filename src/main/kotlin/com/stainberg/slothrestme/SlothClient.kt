@@ -11,8 +11,8 @@ object SlothClient {
     private val fixParameters = HashMap<String, String>()
     private val fixHeaders = HashMap<String, String>()
 
-    fun <T : SlothResponse> request(url : String) : SlothRequest<T> {
-        return SlothStandaloneRequest<T>().url(url)
+    fun request(url : String) : SlothRequest {
+        return SlothStandaloneRequest().url(url)
     }
 
     fun requestSet(vararg jobs : Deferred<*>) : SlothRequestSet {

@@ -3,6 +3,4 @@ package com.stainberg.slothrestme
 /**
  * Created by Stainberg on 15/03/2018.
  */
-interface ResponseBlock {
-    var request : SlothRequest
-}
+class SuccessResponseBlock(override var request: SlothRequest) : ResponseBlock
