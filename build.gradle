@@ -46,3 +46,17 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:27.1.0'
     testImplementation 'junit:junit:4.12'
 }
+
+repositories {
+    mavenCentral()
+}
+
+apply plugin: 'com.novoda.bintray-release'
+publish {
+    userOrg = 'donaldyen'
+    groupId = 'com.stainberg.sloth'
+    artifactId = 'sloth-http'
+    publishVersion = '0.1.1'
+    desc = 'with coroutines & okhttp'
+    website = 'https://github.com/stainberg/sloth-restme'
+}
