@@ -9,7 +9,7 @@ class CompletedResponseBlock(override var request: SlothRequest) : ResponseBlock
 
     private lateinit var task: Deferred<*>
 
-    fun initTask(job: Deferred<*>) {
+    internal fun initTask(job: Deferred<*>) {
         task = job
     }
 

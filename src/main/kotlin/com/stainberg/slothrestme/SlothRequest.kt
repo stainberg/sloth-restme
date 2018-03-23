@@ -10,17 +10,19 @@ import okhttp3.RequestBody
  */
 open class SlothRequest {
 
-    var url = ""
-    private var tag = ""
-    private var jsonobject : Any? = null
-    private var memthod = SlothRequestType.GET
     private val parameters = HashMap<String, String>()
     private val headers = HashMap<String, String>()
     private val attachments = arrayListOf<Attachment>()
 
+    private var url = ""
+    private var tag = ""
+    private var jsonobject : Any? = null
+    private var method = SlothRequestType.GET
+    private var handler = SlothHandleType.main
+
     internal var success : (suspend SuccessResponseBlock.(Any) -> Unit)? = null
 
-    internal var failed : (suspend FailedResponseBlock.(Int) -> Unit)? = null
+    internal var failed : (suspend FailedResponseBlock.(Int, String) -> Unit)? = null
 
     internal var completed : (suspend CompletedResponseBlock.() -> Unit)? = null
 
@@ -84,7 +86,7 @@ open class SlothRequest {
         return this
     }
 
-    fun onFailed(block : suspend FailedResponseBlock.(Int) -> Unit) : SlothRequest {
+    fun onFailed(block : suspend FailedResponseBlock.(Int, String) -> Unit) : SlothRequest {
         failed = block
         return this
     }
@@ -106,6 +108,10 @@ open class SlothRequest {
         return tag
     }
 
+    fun handler() : SlothHandleType {
+        return handler
+    }
+
     fun params() : Map<String, String> {
         return parameters
     }
@@ -115,7 +121,7 @@ open class SlothRequest {
     }
 
     fun method() : SlothRequestType {
-        return memthod
+        return method
     }
 
     fun jsonObject() : Any? {
@@ -130,55 +136,75 @@ open class SlothRequest {
      * define function
      */
 
-    fun  get() {
-        memthod = SlothRequestType.GET
-        val thread = Thread.currentThread()
+    fun  get(handler : SlothHandleType? = SlothHandleType.main) {
+        method = SlothRequestType.GET
+        handler?. let {
+            this.handler = it
+        }
         launch {
-            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest), thread)
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
         }
     }
 
-    fun  getSync() : Deferred<*> {
-        memthod = SlothRequestType.GET
+    fun  getSync(handler : SlothHandleType? = SlothHandleType.main) : Deferred<*> {
+        method = SlothRequestType.GET
+        handler?. let {
+            this.handler = it
+        }
         return SlothLogic.get(this, CoroutineStart.LAZY)
     }
 
-    fun  post() {
-        memthod = SlothRequestType.POST
-        val thread = Thread.currentThread()
+    fun  post(handler : SlothHandleType? = SlothHandleType.main) {
+        method = SlothRequestType.POST
+        handler?. let {
+            this.handler = it
+        }
         launch {
-            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest), thread)
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
         }
     }
 
-    fun postSync() : Deferred<*> {
-        memthod = SlothRequestType.POST
+    fun postSync(handler : SlothHandleType? = SlothHandleType.main) : Deferred<*> {
+        method = SlothRequestType.POST
+        handler?. let {
+            this.handler = it
+        }
         return SlothLogic.post(this, CoroutineStart.LAZY)
     }
 
-    fun  patch() {
-        memthod = SlothRequestType.PATCH
-        val thread = Thread.currentThread()
+    fun  patch(handler : SlothHandleType? = SlothHandleType.main) {
+        method = SlothRequestType.PATCH
+        handler?. let {
+            this.handler = it
+        }
         launch {
-            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest), thread)
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
         }
     }
 
-    fun patchSync() : Deferred<*> {
-        memthod = SlothRequestType.PATCH
+    fun patchSync(handler : SlothHandleType? = SlothHandleType.main) : Deferred<*> {
+        method = SlothRequestType.PATCH
+        handler?. let {
+            this.handler = it
+        }
         return SlothLogic.patch(this, CoroutineStart.LAZY)
     }
 
-    fun  delete() {
-        memthod = SlothRequestType.DELETE
-        val thread = Thread.currentThread()
+    fun  delete(handler : SlothHandleType? = SlothHandleType.main) {
+        method = SlothRequestType.DELETE
+        handler?. let {
+            this.handler = it
+        }
         launch {
-            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest), thread)
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
         }
     }
 
-    fun deleteSync() : Deferred<*> {
-        memthod = SlothRequestType.DELETE
+    fun deleteSync(handler : SlothHandleType? = SlothHandleType.main) : Deferred<*> {
+        method = SlothRequestType.DELETE
+        handler?. let {
+            this.handler = it
+        }
         return SlothLogic.delete(this, CoroutineStart.LAZY)
     }
 

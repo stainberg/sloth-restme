@@ -9,13 +9,12 @@ import java.io.IOException
 /**
  * Created by Stainberg on 20/03/2018.
  */
-object SlothLogic {
+internal object SlothLogic {
 
     fun get(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
         val block = CompletedResponseBlock(request)
-        val thread = Thread.currentThread()
         val task = async(CommonPool, start, block = {
-            fetchRequest(request, block, thread)
+            fetchRequest(request, block)
         })
         block.initTask(task)
         return task
@@ -23,9 +22,8 @@ object SlothLogic {
 
     fun post(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
         val block = CompletedResponseBlock(request)
-        val thread = Thread.currentThread()
         val task = async(CommonPool, start, block = {
-            fetchRequest(request, block, thread)
+            fetchRequest(request, block)
         })
         block.initTask(task)
         return task
@@ -33,9 +31,8 @@ object SlothLogic {
 
     fun patch(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
         val block = CompletedResponseBlock(request)
-        val thread = Thread.currentThread()
         val task = async(CommonPool, start, block = {
-            fetchRequest(request, block, thread)
+            fetchRequest(request, block)
         })
         block.initTask(task)
         return task
@@ -43,17 +40,17 @@ object SlothLogic {
 
     fun delete(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
         val block = CompletedResponseBlock(request)
-        val thread = Thread.currentThread()
         val task = async(CommonPool, start, block = {
-            fetchRequest(request, block, thread)
+            fetchRequest(request, block)
         })
         block.initTask(task)
         return task
     }
 
-    suspend fun fetchRequest(request: SlothRequest, completedResponseBlock: CompletedResponseBlock, main : Thread) {
+    suspend fun fetchRequest(request: SlothRequest, completedResponseBlock: CompletedResponseBlock) {
         val req = parse(request)
         var code = 0
+        var message = ""
         val success = request.success
         val failed = request.failed
         val completed = request.completed
@@ -80,45 +77,68 @@ object SlothLogic {
                 resp.close()
             }?: run {
                 code = SlothNetworkConstants.NO_RESPONSE
+                message = "no response"
             }
         } catch (e : IOException) {
             code = SlothNetworkConstants.NETWORK_ERROR
+            e.message?. let {
+                message = it
+            }
         } catch (e : Exception) {
             code = SlothNetworkConstants.PARSER_ERROR
+            e.message?. let {
+                message = it
+            }
         }
         if(code in 200..299) {
             if(success != null) {
                 result?. let {
-                    handler.post {
-                        runBlocking {
-                            success(SuccessResponseBlock(request), it)
+                    if(request.handler() == SlothHandleType.main) {
+                        handler.post {
+                            runBlocking {
+                                success(SuccessResponseBlock(request), it)
+                            }
                         }
+                    } else {
+                        success(SuccessResponseBlock(request), it)
                     }
                 }?: run {
                     failed?. let {fl->
-                        handler.post {
-                            runBlocking {
-                                fl(FailedResponseBlock(request), SlothNetworkConstants.NO_RESULT_SET)
+                        if(request.handler() == SlothHandleType.main) {
+                            handler.post {
+                                runBlocking {
+                                    fl(FailedResponseBlock(request), SlothNetworkConstants.NO_RESULT_SET, "no result set")
+                                }
                             }
+                        } else {
+                            fl(FailedResponseBlock(request), SlothNetworkConstants.NO_RESULT_SET, "no result set")
                         }
                     }
                 }
             }
         } else {
             if(failed != null) {
-                handler.post {
-                    runBlocking {
-                        failed(FailedResponseBlock(request), code)
+                if(request.handler() == SlothHandleType.main) {
+                    handler.post {
+                        runBlocking {
+                            failed(FailedResponseBlock(request), code, message)
+                        }
                     }
+                } else {
+                    failed(FailedResponseBlock(request), code, message)
                 }
             }
         }
         if(completed != null) {
-            handler.post {
-                runBlocking {
-                    println(Thread.currentThread().id)
-                    completed(completedResponseBlock)
+            if(request.handler() == SlothHandleType.main) {
+                handler.post {
+                    runBlocking {
+                        println(Thread.currentThread().id)
+                        completed(completedResponseBlock)
+                    }
                 }
+            } else {
+                completed(completedResponseBlock)
             }
         }
     }
@@ -128,6 +148,7 @@ object SlothLogic {
         val headers = requestEntity.headers()
         val attachments = requestEntity.attachments()
         val builder = Request.Builder()
+        var url = requestEntity.url()
         builder.addHeader("Cache-Control", "no-cache")
         if (headers.isNotEmpty()) {
             val set = headers.entries
@@ -137,7 +158,7 @@ object SlothLogic {
         }
         if (requestEntity.method() == SlothRequestType.GET) {
             if (params.isNotEmpty()) {
-                requestEntity.url += "?" + SlothHttpUtils.getNameValuePair(params)!!
+                url += "?" + SlothHttpUtils.getNameValuePair(params)!!
             }
         } else if (requestEntity.method() == SlothRequestType.POST) {
             requestEntity.jsonObject()?. let {
@@ -212,8 +233,8 @@ object SlothLogic {
                 builder.delete(body)
             }
         }
-        builder.tag(SecurityMD5.ToMD5(requestEntity.url))
-        builder.url(requestEntity.url)
+        builder.tag(SecurityMD5.ToMD5(url))
+        builder.url(url)
         return builder.build()
     }
 
