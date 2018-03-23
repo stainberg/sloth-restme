@@ -135,11 +135,17 @@ internal object SlothLogic {
     }
 
     private fun parse(requestEntity: SlothRequest) : Request {
-        val params = requestEntity.params()
-        val headers = requestEntity.headers()
+        val params = requestEntity.slothParams
+        val headers = requestEntity.slothHeaders
         val attachments = requestEntity.attachments()
         val builder = Request.Builder()
         var url = requestEntity.url()
+        if(SlothClient.fixHeaders.isNotEmpty()) {
+            headers.putAll(SlothClient.fixHeaders)
+        }
+        if(SlothClient.fixParameters.isNotEmpty()) {
+            params.putAll(SlothClient.fixParameters)
+        }
         builder.addHeader("Cache-Control", "no-cache")
         if (headers.isNotEmpty()) {
             val set = headers.entries

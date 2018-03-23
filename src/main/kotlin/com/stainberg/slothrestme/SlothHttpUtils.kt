@@ -17,8 +17,7 @@ internal object SlothHttpUtils {
                 if (StrArgs == null) {
                     StrArgs = key + "=" + URLEncoder.encode(value, "UTF-8")
                 } else {
-                    StrArgs = "&" + key + "=" + URLEncoder.encode(value, "UTF-8")
-                    StrArgs += StrArgs
+                    StrArgs += "&" + key + "=" + URLEncoder.encode(value, "UTF-8")
                 }
             } catch (e: UnsupportedEncodingException) {
                 e.printStackTrace()

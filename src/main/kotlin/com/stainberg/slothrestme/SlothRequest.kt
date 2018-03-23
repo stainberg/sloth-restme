@@ -10,8 +10,8 @@ import okhttp3.RequestBody
  */
 open class SlothRequest {
 
-    private val parameters = HashMap<String, String>()
-    private val headers = HashMap<String, String>()
+    internal val slothParams = mutableMapOf<String, String>()
+    internal val slothHeaders = mutableMapOf<String, String>()
     private val attachments = arrayListOf<Attachment>()
 
     private var url = ""
@@ -49,18 +49,18 @@ open class SlothRequest {
 
     fun param(key : String, value : String?) : SlothRequest {
         value?. let {
-            this.parameters[key] = it
+            this.slothParams[key] = it
         }?: run {
-            this.parameters.remove(key)
+            this.slothParams.remove(key)
         }
         return this
     }
 
     fun header(key : String, value : String?) : SlothRequest {
         value?. let {
-            this.headers[key] = it
+            this.slothHeaders[key] = it
         }?: run {
-            this.headers.remove(key)
+            this.slothHeaders.remove(key)
         }
         return this
     }
@@ -113,11 +113,11 @@ open class SlothRequest {
     }
 
     fun params() : Map<String, String> {
-        return parameters
+        return slothParams
     }
 
     fun headers() : Map<String, String> {
-        return headers
+        return slothHeaders
     }
 
     fun method() : SlothRequestType {

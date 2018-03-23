@@ -8,8 +8,8 @@ import kotlinx.coroutines.experimental.Deferred
 
 object SlothClient {
 
-    private val fixParameters = HashMap<String, String>()
-    private val fixHeaders = HashMap<String, String>()
+    internal val fixParameters = mutableMapOf<String, String>()
+    internal val fixHeaders = mutableMapOf<String, String>()
 
     fun request(url : String) : SlothRequest {
         return SlothStandaloneRequest().url(url)
