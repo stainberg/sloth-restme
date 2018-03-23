@@ -129,6 +129,11 @@ internal object SlothLogic {
                 }
             }
         }
+        SlothClient.codeHandlers[code]?. let {
+            launch {
+                SlothClient.codeHandlers[code](CodeHandlerBlock(), request)
+            }
+        }
         if(completed != null) {
             completed(completedResponseBlock)
         }

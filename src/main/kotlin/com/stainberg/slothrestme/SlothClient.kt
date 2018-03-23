@@ -1,5 +1,6 @@
 package com.stainberg.slothrestme
 
+import android.util.SparseArray
 import kotlinx.coroutines.experimental.Deferred
 
 /**
@@ -10,6 +11,7 @@ object SlothClient {
 
     internal val fixParameters = mutableMapOf<String, String>()
     internal val fixHeaders = mutableMapOf<String, String>()
+    internal val codeHandlers = SparseArray<CodeHandlerBlock.(SlothRequest) -> Unit>()
 
     fun request(url : String) : SlothRequest {
         return SlothStandaloneRequest().url(url)
@@ -39,9 +41,12 @@ object SlothClient {
         }
     }
 
-    fun subscribeHttpCodeHandler(code : Int) {
-
+    fun subscribeHttpCodeHandler(code : Int, block : CodeHandlerBlock.(SlothRequest) -> Unit = {}) {
+        codeHandlers.put(code, block)
     }
 
+    fun unSubscribeHttpCodeHandler(code : Int) {
+        codeHandlers.remove(code)
+    }
 
 }
