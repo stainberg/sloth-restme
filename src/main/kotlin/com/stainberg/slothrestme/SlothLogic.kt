@@ -130,16 +130,7 @@ internal object SlothLogic {
             }
         }
         if(completed != null) {
-            if(request.handler() == SlothHandleType.main) {
-                handler.post {
-                    runBlocking {
-                        println(Thread.currentThread().id)
-                        completed(completedResponseBlock)
-                    }
-                }
-            } else {
-                completed(completedResponseBlock)
-            }
+            completed(completedResponseBlock)
         }
     }
 

@@ -39,5 +39,9 @@ object SlothClient {
         }
     }
 
+    fun subscribeHttpCodeHandler(code : Int) {
+
+    }
+
 
 }

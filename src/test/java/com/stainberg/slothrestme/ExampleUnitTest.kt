@@ -20,29 +20,54 @@ class ExampleUnitTest {
                         .onSuccess(ABC::class.java, {
                             println("onSuccess ${SlothGson.toJson(it)}")
                         })
-                        .onFailed {
-                            println("onFailed Code = $it")
+                        .onFailed {code, message->
+                            println("onFailed Code = $code message = $message")
                         }
                         .onCompleted {
                             println("onCompleted")
                             println(Thread.currentThread().id)
                         }
+                    .getSync(SlothHandleType.background),
+                SlothClient.request("http://192.168.75.36:1234/read").param("ids", SlothGson.toJson(arr)).tag("123")
+                        .onSuccess(ABC::class.java, {
+                            println("onSuccess ${SlothGson.toJson(it)}")
+                        })
+                        .onFailed {code, message->
+                            println("onFailed Code = $code message = $message")
+                        }
+                        .onCompleted {
+                            println("onCompleted")
+                            println(Thread.currentThread().id)
+                            cancelRemainderTasks()
+                        }
+                        .getSync(SlothHandleType.main),
+                SlothClient.request("http://192.168.75.36:1234/read").param("ids", SlothGson.toJson(arr)).tag("123")
+                    .onSuccess(ABC::class.java, {
+                        println("onSuccess ${SlothGson.toJson(it)}")
+                    })
+                    .onFailed {code, message->
+                        println("onFailed Code = $code message = $message")
+                    }
+                    .onCompleted {
+                        println("onCompleted")
+                        println(Thread.currentThread().id)
+                    }
                     .getSync()
         ).start({
             println("set end")
         })
 
-        SlothClient.request("http://192.168.75.36:1234/read").param("ids", SlothGson.toJson(arr))
-                .onSuccess(ABC::class.java, {
-                    println("onSuccess ${SlothGson.toJson(it)}")
-                })
-                .onFailed {
-                    println("onFailed Code = $it")
-                }
-                .onCompleted {
-                    println("onCompleted")
-                }
-                .get()
+//        SlothClient.request("http://192.168.75.36:1234/read").param("ids", SlothGson.toJson(arr))
+//                .onSuccess(ABC::class.java, {
+//                    println("onSuccess ${SlothGson.toJson(it)}")
+//                })
+//                .onFailed {code, message->
+//                    println("onFailed Code = $code message = $message")
+//                }
+//                .onCompleted {
+//                    println("onCompleted")
+//                }
+//                .get()
 
         while (true) {
 
