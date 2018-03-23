@@ -1,6 +1,5 @@
 package com.stainberg.slothrestme
 
-import com.alibaba.fastjson.JSON
 import org.junit.Test
 
 /**
@@ -12,29 +11,30 @@ class ExampleUnitTest {
 
     @Test
     fun addition_isCorrect() {
-        SlothLogger.isDebug = true
+        SlothLogger.isDebug = false
         val arr = arrayListOf<String>()
         arr.add("d36ab911728b4e9b8dafe63c43fe0906")
-
+        println(Thread.currentThread().id)
         SlothClient.requestSet(
-                SlothClient.request("http://192.168.75.36:1234/read").param("ids", JSON.toJSONString(arr)).tag("123")
+                SlothClient.request("http://192.168.75.36:1234/read").param("ids", SlothGson.toJson(arr)).tag("123")
                         .onSuccess(ABC::class.java, {
-                            println("onSuccess ${JSON.toJSON(it)}")
+                            println("onSuccess ${SlothGson.toJson(it)}")
                         })
                         .onFailed {
                             println("onFailed Code = $it")
                         }
                         .onCompleted {
                             println("onCompleted")
+                            println(Thread.currentThread().id)
                         }
                     .getSync()
         ).start({
             println("set end")
         })
 
-        SlothClient.request("http://192.168.75.36:1234/read").param("ids", JSON.toJSONString(arr))
+        SlothClient.request("http://192.168.75.36:1234/read").param("ids", SlothGson.toJson(arr))
                 .onSuccess(ABC::class.java, {
-                    println("onSuccess ${JSON.toJSON(it)}")
+                    println("onSuccess ${SlothGson.toJson(it)}")
                 })
                 .onFailed {
                     println("onFailed Code = $it")
@@ -49,10 +49,10 @@ class ExampleUnitTest {
         }
     }
 
-    class ABC : SlothResponse() {
+    class ABC : SlothResponse {
         var read_nums = arrayListOf<BCD>()
 
-        class BCD : SlothResponse() {
+        class BCD : SlothResponse {
             var id = ""
             var read_num = 0
 

@@ -1,3 +1,4 @@
+@file:JvmName("SlothString")
 package com.stainberg.slothrestme
 
 /**

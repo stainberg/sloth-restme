@@ -1,6 +1,5 @@
 package com.stainberg.slothrestme
 
-import com.alibaba.fastjson.annotation.JSONField
 import kotlinx.coroutines.experimental.CoroutineStart
 import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.launch
@@ -11,7 +10,7 @@ import okhttp3.RequestBody
  */
 open class SlothRequest {
 
-    internal var url = ""
+    var url = ""
     private var tag = ""
     private var jsonobject : Any? = null
     private var memthod = SlothRequestType.GET
@@ -19,13 +18,13 @@ open class SlothRequest {
     private val headers = HashMap<String, String>()
     private val attachments = arrayListOf<Attachment>()
 
-    @JSONField(serialize=false, deserialize=false) internal var success : (suspend SuccessResponseBlock.(SlothResponse) -> Unit)? = null
+    internal var success : (suspend SuccessResponseBlock.(Any) -> Unit)? = null
 
-    @JSONField(serialize=false, deserialize=false) internal var failed : (suspend FailedResponseBlock.(Int) -> Unit)? = null
+    internal var failed : (suspend FailedResponseBlock.(Int) -> Unit)? = null
 
-    @JSONField(serialize=false, deserialize=false) internal var completed : (suspend CompletedResponseBlock.() -> Unit)? = null
+    internal var completed : (suspend CompletedResponseBlock.() -> Unit)? = null
 
-    internal var cls : Class<SlothResponse>? = null
+    var cls : Class<Any>? = null
 
     /**
      * set url
@@ -78,9 +77,10 @@ open class SlothRequest {
      * set result block
      */
 
-    fun <T : SlothResponse> onSuccess(c : Class<T>, block : suspend SuccessResponseBlock.(SlothResponse) -> Unit) : SlothRequest {
-        success = block
-        cls = c as Class<SlothResponse>
+    @Suppress("UNCHECKED_CAST")
+    fun <T> onSuccess(c : Class<T>, block : suspend SuccessResponseBlock.(T) -> Unit) : SlothRequest {
+        success = block as (suspend SuccessResponseBlock.(Any) -> Unit)
+        cls = c as Class<Any>
         return this
     }
 
@@ -132,8 +132,9 @@ open class SlothRequest {
 
     fun  get() {
         memthod = SlothRequestType.GET
+        val thread = Thread.currentThread()
         launch {
-            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest), thread)
         }
     }
 
@@ -144,8 +145,9 @@ open class SlothRequest {
 
     fun  post() {
         memthod = SlothRequestType.POST
+        val thread = Thread.currentThread()
         launch {
-            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest), thread)
         }
     }
 
@@ -156,8 +158,9 @@ open class SlothRequest {
 
     fun  patch() {
         memthod = SlothRequestType.PATCH
+        val thread = Thread.currentThread()
         launch {
-            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest), thread)
         }
     }
 
@@ -168,8 +171,9 @@ open class SlothRequest {
 
     fun  delete() {
         memthod = SlothRequestType.DELETE
+        val thread = Thread.currentThread()
         launch {
-            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest))
+            SlothLogic.fetchRequest(this@SlothRequest, CompletedResponseBlock(this@SlothRequest), thread)
         }
     }
 

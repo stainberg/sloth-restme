@@ -1,23 +1,21 @@
 package com.stainberg.slothrestme
 
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.JSONException
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.CoroutineStart
-import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.async
+import android.os.Handler
+import android.os.Looper
+import kotlinx.coroutines.experimental.*
 import okhttp3.*
 import java.io.IOException
 
 /**
  * Created by Stainberg on 20/03/2018.
  */
-internal object SlothLogic {
+object SlothLogic {
 
     fun get(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
         val block = CompletedResponseBlock(request)
+        val thread = Thread.currentThread()
         val task = async(CommonPool, start, block = {
-            fetchRequest(request, block)
+            fetchRequest(request, block, thread)
         })
         block.initTask(task)
         return task
@@ -25,8 +23,9 @@ internal object SlothLogic {
 
     fun post(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
         val block = CompletedResponseBlock(request)
+        val thread = Thread.currentThread()
         val task = async(CommonPool, start, block = {
-            fetchRequest(request, block)
+            fetchRequest(request, block, thread)
         })
         block.initTask(task)
         return task
@@ -34,8 +33,9 @@ internal object SlothLogic {
 
     fun patch(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
         val block = CompletedResponseBlock(request)
+        val thread = Thread.currentThread()
         val task = async(CommonPool, start, block = {
-            fetchRequest(request, block)
+            fetchRequest(request, block, thread)
         })
         block.initTask(task)
         return task
@@ -43,20 +43,21 @@ internal object SlothLogic {
 
     fun delete(request: SlothRequest, start: CoroutineStart) : Deferred<*> {
         val block = CompletedResponseBlock(request)
+        val thread = Thread.currentThread()
         val task = async(CommonPool, start, block = {
-            fetchRequest(request, block)
+            fetchRequest(request, block, thread)
         })
         block.initTask(task)
         return task
     }
 
-    internal suspend fun fetchRequest(request: SlothRequest, completedResponseBlock: CompletedResponseBlock) {
+    suspend fun fetchRequest(request: SlothRequest, completedResponseBlock: CompletedResponseBlock, main : Thread) {
         val req = parse(request)
         var code = 0
         val success = request.success
         val failed = request.failed
         val completed = request.completed
-        var result: SlothResponse? = null
+        var result: Any? = null
         try {
             val response = SlothHttpClient.httpClient.newCall(req).execute()
             var responseString: String
@@ -68,10 +69,10 @@ internal object SlothLogic {
                 if (resp.isSuccessful) {
                     resp.body()?.let { body ->
                         responseString = body.string()
-                        if (request.cls != null) {
+                        request.cls?. let {
                             if(responseString.isNotEmpty()) {
                                 SlothLogger.log("fetchRequest", responseString)
-                                result = JSON.parseObject(responseString, request.cls)
+                                result = SlothGson.fromJson(responseString, it)
                             }
                         }
                     }
@@ -82,26 +83,43 @@ internal object SlothLogic {
             }
         } catch (e : IOException) {
             code = SlothNetworkConstants.NETWORK_ERROR
-        } catch (e : JSONException) {
+        } catch (e : Exception) {
             code = SlothNetworkConstants.PARSER_ERROR
         }
         if(code in 200..299) {
-            success?. let {sc->
+            if(success != null) {
                 result?. let {
-                    sc(SuccessResponseBlock(request), it)
+                    handler.post {
+                        runBlocking {
+                            success(SuccessResponseBlock(request), it)
+                        }
+                    }
                 }?: run {
                     failed?. let {fl->
-                        fl(FailedResponseBlock(request), SlothNetworkConstants.NO_RESULT_SET)
+                        handler.post {
+                            runBlocking {
+                                fl(FailedResponseBlock(request), SlothNetworkConstants.NO_RESULT_SET)
+                            }
+                        }
                     }
                 }
             }
         } else {
-            failed?. let {fl->
-                fl(FailedResponseBlock(request), code)
+            if(failed != null) {
+                handler.post {
+                    runBlocking {
+                        failed(FailedResponseBlock(request), code)
+                    }
+                }
             }
         }
-        completed?. let {cp->
-            cp(completedResponseBlock)
+        if(completed != null) {
+            handler.post {
+                runBlocking {
+                    println(Thread.currentThread().id)
+                    completed(completedResponseBlock)
+                }
+            }
         }
     }
 
@@ -122,9 +140,9 @@ internal object SlothLogic {
                 requestEntity.url += "?" + SlothHttpUtils.getNameValuePair(params)!!
             }
         } else if (requestEntity.method() == SlothRequestType.POST) {
-            if (requestEntity.jsonObject() != null) {
-                builder.post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), JSON.toJSONString(requestEntity.jsonObject())))
-            } else {
+            requestEntity.jsonObject()?. let {
+                builder.post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), SlothGson.toJson(it)))
+            }?: run {
                 val body: RequestBody
                 if (attachments.size == 0) {
                     val bodyBuilder = FormBody.Builder()
@@ -146,9 +164,9 @@ internal object SlothLogic {
                 builder.post(body)
             }
         } else if (requestEntity.method() == SlothRequestType.PATCH) {
-            if (requestEntity.jsonObject() != null) {
-                builder.patch(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), JSON.toJSONString(requestEntity.jsonObject())))
-            } else {
+            requestEntity.jsonObject()?. let {
+                builder.patch(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), SlothGson.toJson(it)))
+            }?: run {
                 val body: RequestBody
                 if (attachments.size == 0) {
                     val bodyBuilder = FormBody.Builder()
@@ -170,9 +188,9 @@ internal object SlothLogic {
                 builder.patch(body)
             }
         } else if (requestEntity.method() == SlothRequestType.DELETE) {
-            if (requestEntity.jsonObject() != null) {
-                builder.patch(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), JSON.toJSONString(requestEntity.jsonObject())))
-            } else {
+            requestEntity.jsonObject()?. let {
+                builder.patch(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), SlothGson.toJson(it)))
+            }?: run {
                 val body: RequestBody
                 if (attachments.size == 0) {
                     val bodyBuilder = FormBody.Builder()
@@ -198,5 +216,8 @@ internal object SlothLogic {
         builder.url(requestEntity.url)
         return builder.build()
     }
+
+    private val handler = Handler(Looper.getMainLooper())
+
 
 }

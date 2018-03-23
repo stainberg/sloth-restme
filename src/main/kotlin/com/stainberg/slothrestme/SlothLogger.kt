@@ -1,7 +1,5 @@
 package com.stainberg.slothrestme
 
-import com.alibaba.fastjson.JSON
-
 /**
  * Created by Stainberg on 9/14/17.
  */
@@ -19,7 +17,9 @@ object SlothLogger {
     internal fun log(tag: String, o: Any?) {
         if (isDebug) {
             try {
-                println("$tag = ${JSON.toJSONString(o)}")
+                o?. let {
+                    println("$tag = ${SlothGson.toJson(it)}")
+                }
             } catch (e: Exception) {
                 println("$tag = Println Error e = ${e.message}")
             }
@@ -60,7 +60,7 @@ object SlothLogger {
                 builder.append(wspace)
                 builder.append("'")
                 request.jsonObject()?. let {
-                    builder.append(JSON.toJSONString(request.jsonObject()))
+                    builder.append(SlothGson.toJson(it))
                 }?: run {
                     var index = 1
                     for (entry in request.params().entries) {
