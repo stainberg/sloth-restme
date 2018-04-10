@@ -55,8 +55,9 @@ internal object SlothLogic {
         val failed = request.failed
         val completed = request.completed
         var result: Any? = null
+        val client = SlothHttpClient.customClient?.httpClient?:SlothHttpClient.httpClient
         try {
-            val response = SlothHttpClient.httpClient.newCall(req).execute()
+            val response = client.newCall(req).execute()
             var responseString: String
             SlothLogger.printcUrl(request)
             SlothLogger.log("params", request.params())

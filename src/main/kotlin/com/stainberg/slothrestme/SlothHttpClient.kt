@@ -1,8 +1,6 @@
 package com.stainberg.slothrestme
 
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
@@ -11,23 +9,27 @@ import java.util.concurrent.TimeUnit
 internal object SlothHttpClient {
 
     val httpClient: OkHttpClient
-    val downloadClient: OkHttpClient
+    var customClient : SlothCustomHttpClient? = null
 
     init {
         val builder = OkHttpClient.Builder()
         builder.connectTimeout(SlothNetworkConfig.HTTP_CONNECT_TIMEOUT, TimeUnit.MILLISECONDS)
         builder.readTimeout(SlothNetworkConfig.HTTP_READ_TIMEOUT, TimeUnit.MILLISECONDS)
         builder.writeTimeout(SlothNetworkConfig.HTTP_WRITE_TIMEOUT, TimeUnit.MILLISECONDS)
-        val protocols = ArrayList<Protocol>()
-        protocols.add(Protocol.HTTP_1_1)
-        builder.protocols(protocols)
         httpClient = builder.build()
-
-        val downloadb = OkHttpClient.Builder()
-        downloadb.connectTimeout(SlothNetworkConfig.DOWNLOAD_CONNECT_TIMEOUT, TimeUnit.MILLISECONDS)
-        downloadb.readTimeout(SlothNetworkConfig.DOWNLOAD_READ_TIMEOUT, TimeUnit.MILLISECONDS)
-        downloadb.writeTimeout(SlothNetworkConfig.DOWNLOAD_WRITE_TIMEOUT, TimeUnit.MILLISECONDS)
-        downloadClient = downloadb.build()
     }
 
+    fun forkClient() : OkHttpClient {
+        customClient?.httpClient?. let {
+            return it.newBuilder().build()
+        }?:return httpClient.newBuilder().build()
+    }
+
+    fun forkClientBuilder() : OkHttpClient.Builder {
+        customClient?.httpClient?. let {
+            return it.newBuilder()
+        }?: return httpClient.newBuilder()
+    }
 }
+
+
