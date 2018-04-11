@@ -54,7 +54,30 @@ internal object SlothLogic {
         val success = request.success
         val failed = request.failed
         val completed = request.completed
+        val local = request.local
         var result: Any? = null
+        SlothClient.cache?. let {cache ->
+            val resultStr = cache.get(request)
+            resultStr?. let {
+                request.cls?. let {
+                    SlothLogger.log("fetchLocalRequest", resultStr)
+                    val tmpResult = SlothGson.fromJson(resultStr, it)
+                    tmpResult?. let {
+                        local?.let {
+                            if (request.handler() == SlothHandleType.main) {
+                                handler.post {
+                                    runBlocking {
+                                        local(LocalResponseBlock(request), tmpResult)
+                                    }
+                                }
+                            } else {
+                                local(LocalResponseBlock(request), tmpResult)
+                            }
+                        }
+                    }
+                }
+            }
+        }
         val client = SlothHttpClient.customClient?.httpClient?:SlothHttpClient.httpClient
         try {
             val response = client.newCall(req).execute()
@@ -71,6 +94,11 @@ internal object SlothLogic {
                             if(responseString.isNotEmpty()) {
                                 SlothLogger.log("fetchRequest", responseString)
                                 result = SlothGson.fromJson(responseString, it)
+                                SlothClient.cache?. let {
+                                    if(request.cache) {
+                                        it.put(request, responseString)
+                                    }
+                                }
                             }
                         }
                     }
@@ -143,7 +171,7 @@ internal object SlothLogic {
     private fun parse(requestEntity: SlothRequest) : Request {
         val params = requestEntity.slothParams
         val headers = requestEntity.slothHeaders
-        val attachments = requestEntity.attachments()
+        val attachments = requestEntity.attachments
         val builder = Request.Builder()
         var url = requestEntity.url()
         if(SlothClient.fixHeaders.isNotEmpty()) {

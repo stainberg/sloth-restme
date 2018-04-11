@@ -12,18 +12,18 @@ open class SlothRequest {
 
     internal val slothParams = mutableMapOf<String, String>()
     internal val slothHeaders = mutableMapOf<String, String>()
-    private val attachments = arrayListOf<Attachment>()
+    internal val attachments = arrayListOf<Attachment>()
 
+    internal var cache : Boolean = false
     private var url = ""
     private var tag = ""
     private var jsonobject : Any? = null
     private var method = SlothRequestType.GET
     private var handler = SlothHandleType.main
 
+    internal var local : (suspend LocalResponseBlock.(Any) -> Unit)? = null
     internal var success : (suspend SuccessResponseBlock.(Any) -> Unit)? = null
-
     internal var failed : (suspend FailedResponseBlock.(Int, String) -> Unit)? = null
-
     internal var completed : (suspend CompletedResponseBlock.() -> Unit)? = null
 
     var cls : Class<Any>? = null
@@ -44,6 +44,11 @@ open class SlothRequest {
 
     fun tag(tag : String) : SlothRequest {
         this.tag = tag
+        return this
+    }
+
+    fun cache(cache : Boolean) : SlothRequest{
+        this.cache = cache
         return this
     }
 
@@ -78,6 +83,13 @@ open class SlothRequest {
     /**
      * set result block
      */
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> onLocal(c : Class<T>, block : suspend LocalResponseBlock.(T) -> Unit) : SlothRequest {
+        local = block as (suspend LocalResponseBlock.(Any) -> Unit)
+        cls = c as Class<Any>
+        return this
+    }
 
     @Suppress("UNCHECKED_CAST")
     fun <T> onSuccess(c : Class<T>, block : suspend SuccessResponseBlock.(T) -> Unit) : SlothRequest {
@@ -130,6 +142,10 @@ open class SlothRequest {
 
     fun attachments() : MutableList<Attachment> {
         return attachments
+    }
+
+    fun cache() : Boolean {
+        return cache
     }
 
     /**
