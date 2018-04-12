@@ -10,13 +10,13 @@ internal object Util {
 
     @Throws(IOException::class)
     fun readFully(reader: Reader): String {
-        reader.use { reader ->
+        reader.use {
             val writer = StringWriter()
             val buffer = CharArray(1024)
-            var count = reader.read(buffer)
+            var count = it.read(buffer)
             while (count != -1) {
                 writer.write(buffer, 0, count)
-                count = reader.read(buffer)
+                count = it.read(buffer)
             }
             return writer.toString()
         }

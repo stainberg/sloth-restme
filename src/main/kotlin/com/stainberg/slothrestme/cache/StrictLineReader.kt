@@ -132,7 +132,7 @@ internal class StrictLineReader
      */
     @Throws(IOException::class)
     private fun fillBuf() {
-        val result = `in`.read(buf, 0, buf!!.size)
+        val result = `in`.read(buf, 0, buf.size)
         if (result == -1) {
             throw EOFException()
         }
