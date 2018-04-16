@@ -1,15 +1,16 @@
 # sloth-restme
-基于coroutines和okhttp的http请求库，多请求链式调用取消请求等
-
-1.集成
+## 基于coroutines和okhttp的http请求库，多请求链式调用取消请求等
+### 1.集成
 ```
 compile 'com.stainberg.sloth:sloth-http:0.1.1'
 ```
-2.使用
-缓存的开启由2个地方控制
-1.初始化缓存目录
-2.请求中需要调用cache方法
-```
+### 2.使用
+
+#### 缓存的开启由2个地方控制
+- 初始化缓存目录
+- 请求中需要调用cache方法
+
+``` kotlin
 //开启缓存策略
 //初始化缓存
 SlothClient.initCache(directory, 50)//缓存在指定目录下
