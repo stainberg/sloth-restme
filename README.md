@@ -6,6 +6,16 @@
 compile 'com.stainberg.sloth:sloth-http:0.1.1'
 ```
 2.使用
+缓存的开启由2个地方控制
+1.初始化缓存目录
+2.请求中需要调用cache方法
+```
+//开启缓存策略
+//初始化缓存
+SlothClient.initCache(directory, 50)//缓存在指定目录下
+SlothClient.initCache(context, 50)//缓存在外部存储区的cache目录中
+```
+
 ``` kotlin
 //订阅404请求的处理逻辑
 SlothClient.subscribeHttpCodeHandler(404, {
@@ -32,7 +42,7 @@ SlothLogger.isDebug = true
 //onCompleted为请求结束的回调闭包
 //重点说明：onSuccess和onFailed可以选择回调在主线程或者是工作协程中，onCompleted一定回调在非主线程
 //单请求例子
-SlothClient.request("http://192.168.75.36:1234/read").param("ids", SlothGson.toJson(arr)).tag("123")
+SlothClient.request("http://192.168.75.36:1234/read").param("ids", SlothGson.toJson(arr)).tag("123").cache(page < 10)//开启缓存
     .onSuccess(ABC::class.java, {
         println("onSuccess ${SlothGson.toJson(it)}")
     })
