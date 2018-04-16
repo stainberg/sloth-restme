@@ -3,6 +3,7 @@ package com.stainberg.slothrestme
 import android.content.Context
 import android.util.SparseArray
 import kotlinx.coroutines.experimental.Deferred
+import java.io.File
 
 /**
  * Created by Stainberg on 15/03/2018.
@@ -45,6 +46,10 @@ object SlothClient {
 
     fun initCache(c : Context, maxSizeM : Int = 50) {
         cache = SlothCache(c.externalCacheDir, maxSizeM.toLong() * 1024 * 1024)
+    }
+
+    fun initCache(directory : File, maxSizeM : Int = 50) {
+        cache = SlothCache(directory, maxSizeM.toLong() * 1024 * 1024)
     }
 
     fun subscribeHttpCodeHandler(code : Int, block : CodeHandlerBlock.(SlothRequest) -> Unit = {}) {
