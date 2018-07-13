@@ -37,14 +37,15 @@ kotlin {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.22.5'
-    implementation 'com.squareup.okhttp3:okhttp:3.9.1'
-    implementation 'com.squareup.okio:okio:1.13.0'
-    implementation 'com.google.code.gson:gson:2.8.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.23.4'
     implementation 'com.android.support:appcompat-v7:27.1.1'
     testImplementation 'junit:junit:4.12'
+    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
+    implementation 'com.squareup.okio:okio:1.14.1'
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
 }
 
 buildscript {
@@ -62,7 +63,7 @@ publish {
     userOrg = 'donaldyen'
     groupId = 'com.stainberg.sloth'
     artifactId = 'sloth-http'
-    publishVersion = '1.0.1'
+    publishVersion = '1.0.2'
     desc = 'with coroutines & okhttp'
     website = 'https://github.com/stainberg/sloth-restme'
 }
