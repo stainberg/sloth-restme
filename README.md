@@ -2,7 +2,7 @@
 ## 基于coroutines和okhttp的http请求库，多请求链式调用取消请求等
 ### 1.集成
 ```
-compile 'com.stainberg.sloth:sloth-http:0.1.1'
+compile 'com.stainberg.sloth:sloth-http:1.0.2'
 ```
 ### 2.使用
 
@@ -108,4 +108,4 @@ SlothClient.requestSet(
     })
 ```
 
-目前是个初稿，如有疑问请留言
+如有疑问请留言
