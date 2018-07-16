@@ -73,18 +73,19 @@ internal object SlothLogic {
                                 local(LocalResponseBlock(request), resultStr)
                             }
                         }
-                    }
-                    val tmpResult = SlothGson.fromJson(resultStr, it)
-                    tmpResult?. let {
-                        local?.let {
-                            if (request.handler() == SlothHandleType.main) {
-                                handler.post {
-                                    runBlocking {
-                                        local(LocalResponseBlock(request), tmpResult)
+                    } else {
+                        val tmpResult = SlothGson.fromJson(resultStr, it)
+                        tmpResult?. let {
+                            local?.let {
+                                if (request.handler() == SlothHandleType.main) {
+                                    handler.post {
+                                        runBlocking {
+                                            local(LocalResponseBlock(request), tmpResult)
+                                        }
                                     }
+                                } else {
+                                    local(LocalResponseBlock(request), tmpResult)
                                 }
-                            } else {
-                                local(LocalResponseBlock(request), tmpResult)
                             }
                         }
                     }

@@ -63,7 +63,7 @@ publish {
     userOrg = 'donaldyen'
     groupId = 'com.stainberg.sloth'
     artifactId = 'sloth-http'
-    publishVersion = '1.0.3'
+    publishVersion = '1.0.4'
     desc = 'with coroutines & okhttp'
     website = 'https://github.com/stainberg/sloth-restme'
 }
