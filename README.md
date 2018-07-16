@@ -2,7 +2,7 @@
 ## 基于coroutines和okhttp的http请求库，多请求链式调用取消请求等
 ### 1.集成
 ```
-compile 'com.stainberg.sloth:sloth-http:1.0.2'
+compile 'com.stainberg.sloth:sloth-http:1.0.3'
 ```
 ### 2.使用
 
