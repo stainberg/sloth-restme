@@ -61,6 +61,19 @@ internal object SlothLogic {
             resultStr?. let {
                 request.cls?. let {
                     SlothLogger.log("fetchLocalRequest", resultStr)
+                    if(it.simpleName == String::class.java.simpleName) {
+                        local?.let {
+                            if (request.handler() == SlothHandleType.main) {
+                                handler.post {
+                                    runBlocking {
+                                        local(LocalResponseBlock(request), resultStr)
+                                    }
+                                }
+                            } else {
+                                local(LocalResponseBlock(request), resultStr)
+                            }
+                        }
+                    }
                     val tmpResult = SlothGson.fromJson(resultStr, it)
                     tmpResult?. let {
                         local?.let {
@@ -79,9 +92,9 @@ internal object SlothLogic {
             }
         }
         val client = SlothHttpClient.customClient?.httpClient?:SlothHttpClient.httpClient
+        var responseString = ""
         try {
             val response = client.newCall(req).execute()
-            var responseString: String
             SlothLogger.printcUrl(request)
             SlothLogger.log("params", request.params())
             SlothLogger.log("headers", request.headers())
@@ -93,7 +106,9 @@ internal object SlothLogic {
                         request.cls?. let {
                             if(responseString.isNotEmpty()) {
                                 SlothLogger.log("fetchRequest", responseString)
-                                result = SlothGson.fromJson(responseString, it)
+                                if(it.simpleName != String::class.java.simpleName) {
+                                    result = SlothGson.fromJson(responseString, it)
+                                }
                                 SlothClient.cache?. let {
                                     if(request.cache) {
                                         it.put(request, responseString)
@@ -132,16 +147,14 @@ internal object SlothLogic {
                         success(SuccessResponseBlock(request), it)
                     }
                 }?: run {
-                    failed?. let {fl->
-                        if(request.handler() == SlothHandleType.main) {
-                            handler.post {
-                                runBlocking {
-                                    fl(FailedResponseBlock(request), SlothNetworkConstants.NO_RESULT_SET, "no result set")
-                                }
+                    if(request.handler() == SlothHandleType.main) {
+                        handler.post {
+                            runBlocking {
+                                success(SuccessResponseBlock(request), responseString)
                             }
-                        } else {
-                            fl(FailedResponseBlock(request), SlothNetworkConstants.NO_RESULT_SET, "no result set")
                         }
+                    } else {
+                        success(SuccessResponseBlock(request), responseString)
                     }
                 }
             }
