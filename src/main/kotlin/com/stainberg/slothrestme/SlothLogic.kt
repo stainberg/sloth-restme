@@ -5,6 +5,7 @@ import android.os.Looper
 import kotlinx.coroutines.experimental.*
 import okhttp3.*
 import java.io.IOException
+import kotlin.coroutines.experimental.coroutineContext
 
 /**
  * Created by Stainberg on 20/03/2018.
@@ -47,7 +48,7 @@ internal object SlothLogic {
         return task
     }
 
-    suspend fun fetchRequest(request: SlothRequest, completedResponseBlock: CompletedResponseBlock) {
+    fun fetchRequest(request: SlothRequest, completedResponseBlock: CompletedResponseBlock) {
         val req = parse(request)
         var code = 0
         var message = ""
@@ -64,10 +65,8 @@ internal object SlothLogic {
                     if(it.simpleName == String::class.java.simpleName) {
                         local?.let {
                             if (request.handler() == SlothHandleType.main) {
-                                handler.post {
-                                    runBlocking {
-                                        local(LocalResponseBlock(request), resultStr)
-                                    }
+                            handler.post {
+                                    local(LocalResponseBlock(request), resultStr)
                                 }
                             } else {
                                 local(LocalResponseBlock(request), resultStr)
@@ -78,10 +77,8 @@ internal object SlothLogic {
                         tmpResult?. let {
                             local?.let {
                                 if (request.handler() == SlothHandleType.main) {
-                                    handler.post {
-                                        runBlocking {
-                                            local(LocalResponseBlock(request), tmpResult)
-                                        }
+                                handler.post {
+                                        local(LocalResponseBlock(request), tmpResult)
                                     }
                                 } else {
                                     local(LocalResponseBlock(request), tmpResult)
@@ -139,20 +136,16 @@ internal object SlothLogic {
             if(success != null) {
                 result?. let {
                     if(request.handler() == SlothHandleType.main) {
-                        handler.post {
-                            runBlocking {
-                                success(SuccessResponseBlock(request), it)
-                            }
+                    handler.post {
+                            success(SuccessResponseBlock(request), it)
                         }
                     } else {
                         success(SuccessResponseBlock(request), it)
                     }
                 }?: run {
                     if(request.handler() == SlothHandleType.main) {
-                        handler.post {
-                            runBlocking {
-                                success(SuccessResponseBlock(request), responseString)
-                            }
+                    handler.post {
+                            success(SuccessResponseBlock(request), responseString)
                         }
                     } else {
                         success(SuccessResponseBlock(request), responseString)
@@ -163,9 +156,7 @@ internal object SlothLogic {
             if(failed != null) {
                 if(request.handler() == SlothHandleType.main) {
                     handler.post {
-                        runBlocking {
-                            failed(FailedResponseBlock(request), code, message)
-                        }
+                        failed(FailedResponseBlock(request), code, message)
                     }
                 } else {
                     failed(FailedResponseBlock(request), code, message)

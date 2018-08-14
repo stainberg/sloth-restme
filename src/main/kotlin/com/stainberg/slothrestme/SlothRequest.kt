@@ -21,10 +21,10 @@ open class SlothRequest {
     private var method = SlothRequestType.GET
     private var handler = SlothHandleType.main
 
-    internal var local : (suspend LocalResponseBlock.(Any) -> Unit)? = null
-    internal var success : (suspend SuccessResponseBlock.(Any) -> Unit)? = null
-    internal var failed : (suspend FailedResponseBlock.(Int, String) -> Unit)? = null
-    internal var completed : (suspend CompletedResponseBlock.() -> Unit)? = null
+    internal var local : (LocalResponseBlock.(Any) -> Unit)? = null
+    internal var success : (SuccessResponseBlock.(Any) -> Unit)? = null
+    internal var failed : (FailedResponseBlock.(Int, String) -> Unit)? = null
+    internal var completed : (CompletedResponseBlock.() -> Unit)? = null
 
     var cls : Class<Any>? = null
 
@@ -85,25 +85,25 @@ open class SlothRequest {
      */
 
     @Suppress("UNCHECKED_CAST")
-    fun <T> onLocal(c : Class<T>, block : suspend LocalResponseBlock.(T) -> Unit) : SlothRequest {
-        local = block as (suspend LocalResponseBlock.(Any) -> Unit)
+    fun <T> onLocal(c : Class<T>, block : LocalResponseBlock.(T) -> Unit) : SlothRequest {
+        local = block as (LocalResponseBlock.(Any) -> Unit)
         cls = c as Class<Any>
         return this
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T> onSuccess(c : Class<T>, block : suspend SuccessResponseBlock.(T) -> Unit) : SlothRequest {
-        success = block as (suspend SuccessResponseBlock.(Any) -> Unit)
+    fun <T> onSuccess(c : Class<T>, block : SuccessResponseBlock.(T) -> Unit) : SlothRequest {
+        success = block as (SuccessResponseBlock.(Any) -> Unit)
         cls = c as Class<Any>
         return this
     }
 
-    fun onFailed(block : suspend FailedResponseBlock.(Int, String) -> Unit) : SlothRequest {
+    fun onFailed(block : FailedResponseBlock.(Int, String) -> Unit) : SlothRequest {
         failed = block
         return this
     }
 
-    fun onCompleted(block : suspend CompletedResponseBlock.() -> Unit) : SlothRequest {
+    fun onCompleted(block : CompletedResponseBlock.() -> Unit) : SlothRequest {
         completed = block
         return this
     }
